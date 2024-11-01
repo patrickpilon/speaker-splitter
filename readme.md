@@ -131,9 +131,23 @@ The script includes error handling for common issues:
 - Invalid timestamps
 - Python version verification
 
+## Future Developments (not planned yet)
+- WhisperX Integration: a major planned enhancement is the direct integration of WhisperX for a complete transcription and diarization workflow
+- Audio Format Support: add support for additional audio formats such as MP3, FLAC, etc.
+- Cross-fade between segments to reduce abrupt transitions
+- Simple web interface for file upload and processing and real-time processing status
+- Speech overlap detection and handling
+- Process multiple files in batch
+- Docker container for easy deployment
+- Integration with LinTO platform
+
 ## Contributing
 
 Contributions are welcome! Please feel free to submit pull requests.
+- Submit pull requests for any of these features
+- Propose new features or improvements
+- Report bugs or issues
+- Share use cases and requirements
 
 ## License
 
