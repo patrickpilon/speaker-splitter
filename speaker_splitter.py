@@ -2,6 +2,8 @@
 Script to separate audio by speaker using timestamp information from JSON.
 Requires input WAV file and JSON file containing speaker segments.
 Creates individual WAV files for each speaker with silence during other speakers' segments.
+
+Michel-Marie MAUDET (michel.maudet@protonmail.com)
 """
 
 import json
