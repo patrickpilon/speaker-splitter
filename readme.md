@@ -47,10 +47,6 @@ pip install pydub
   ```bash
   brew install ffmpeg
   ```
-- Windows:
-  ```bash
-  choco install ffmpeg
-  ```
 
 ## Usage
 
