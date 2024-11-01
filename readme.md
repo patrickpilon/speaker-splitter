@@ -1,6 +1,8 @@
-# Speaker splitter
+# Speaker Splitter
 
 A Python tool to separate audio files by speaker using diarization data. This tool takes a WAV audio file and a JSON file containing speaker timestamps, and creates individual WAV files for each speaker, maintaining the original timing and replacing other speakers' segments with silence.
+
+![Speaker Splitter](/assets/images/Speaker-Splitter-workflow.png)
 
 ## Features
 
