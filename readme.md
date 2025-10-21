@@ -1,23 +1,31 @@
 # Speaker Splitter
 
-A Python tool to separate audio files by speaker using diarization data. This tool takes a WAV audio file and a JSON file containing speaker timestamps, and creates individual WAV files for each speaker, maintaining the original timing and replacing other speakers' segments with silence.
+A Python tool to separate audio files by speaker using diarization data or automatic diarization with WhisperX. This tool can either take a WAV audio file with a JSON file containing speaker timestamps, or automatically transcribe and diarize audio using WhisperX, then creates individual WAV files for each speaker, maintaining the original timing and replacing other speakers' segments with silence.
 
 ![Speaker Splitter](/assets/images/Speaker-Splitter-workflow.png)
 
 ## Features
 
+- **Integrated WhisperX support** for automatic transcription and speaker diarization
 - Separates multi-speaker audio into individual speaker files
+- Two modes of operation:
+  - Manual mode: Use pre-existing JSON diarization files
+  - Automatic mode: Use WhisperX for end-to-end processing
 - Preserves original timing and audio quality
 - Handles timestamps in HH:MM:SS,MMM format
 - Creates silence during non-speaking segments
 - Supports multiple speakers
 - Simple command-line interface
+- Optional export of diarization results to JSON
 
 ## Prerequisites
 
 - Python 3.11 or higher
 - `pydub` library for audio processing
 - FFmpeg (required by pydub)
+- `whisperx` library for automatic diarization (optional, required for WhisperX mode)
+- PyTorch (required for WhisperX mode)
+- HuggingFace account and token (for WhisperX speaker diarization)
 
 ## Installation
 
@@ -53,6 +61,11 @@ pip install pydub gradio
   brew install ffmpeg
   ```
 
+5. (For WhisperX mode) Get a HuggingFace token:
+- Create an account at [HuggingFace](https://huggingface.co)
+- Get your token at [HuggingFace Settings](https://huggingface.co/settings/tokens)
+- Accept the user agreement for speaker diarization at [pyannote/speaker-diarization-3.1](https://huggingface.co/pyannote/speaker-diarization-3.1)
+
 ## Usage
 
 ### Option 1: Web UI (Recommended for Easy Use)
@@ -81,13 +94,14 @@ python speaker_splitter.py input.wav diarization.json
 ### Input Files
 
 1. Audio file (`input.wav`):
-   - Must be in WAV format
+   - Can be in WAV format or other formats supported by WhisperX (MP3, FLAC, etc.)
    - Contains the multi-speaker audio to be separated
 
-2. JSON file (`diarization.json`):
+2. JSON file (`diarization.json`) - Optional when using `--use-whisperx`:
    - Contains speaker segments with timestamps
    - Can be generated using various diarization tools such as:
-     - [WhisperX](https://github.com/m-bain/whisperX): an open-source tool that combines Whisper with speaker diarization
+     - This tool's WhisperX integration (with `--save-json`)
+     - [WhisperX](https://github.com/m-bain/whisperX) CLI
      - [LinTO](https://linto.app): an enterprise-grade conversational AI platform developed by [LINAGORA](https://www.linagora.com)
    - Format example:
 ```json
@@ -109,15 +123,15 @@ python speaker_splitter.py input.wav diarization.json
 }
 ```
 
-#### Generating the JSON File
+#### Generating the JSON File with External Tools
 
-1. Using WhisperX:
+1. Using WhisperX CLI directly:
 ```bash
 # Install WhisperX
 pip install whisperx
 
 # Run diarization
-whisperx audio.wav --diarize
+whisperx audio.wav --diarize --hf_token YOUR_HF_TOKEN
 ```
 
 2. Using LinTO:
@@ -125,8 +139,6 @@ whisperx audio.wav --diarize
    - Upload your audio file
    - Use the transcription and diarization service
    - Export the results in JSON format
-
-Both tools provide accurate speaker diarization and transcription, with the JSON output being compatible with this tool.
 
 ### Output
 
@@ -150,15 +162,23 @@ The script includes error handling for common issues:
 - Invalid timestamps
 - Python version verification
 
+## Recent Updates
+
+### v2.0 - WhisperX Integration (Latest)
+- ✅ **WhisperX Integration**: Complete integration of WhisperX for automatic transcription and speaker diarization
+- ✅ **Dual Mode Operation**: Support for both automatic WhisperX mode and manual JSON mode
+- ✅ **Extended Audio Format Support**: Support for MP3, FLAC, and other formats via WhisperX
+- ✅ **Flexible Model Selection**: Choose from multiple Whisper models (tiny to large-v3)
+- ✅ **GPU Acceleration**: Optional CUDA support for faster processing
+- ✅ **JSON Export**: Save diarization results for future use
+
 ## Future Developments (not planned yet)
-- WhisperX Integration: a major planned enhancement is the direct integration of WhisperX for a complete transcription and diarization workflow
-- Audio Format Support: add support for additional audio formats such as MP3, FLAC, etc.
 - Cross-fade between segments to reduce abrupt transitions
 - ✅ ~~Simple web interface for file upload and processing and real-time processing status~~ **DONE - Gradio UI available!**
 - Speech overlap detection and handling
 - Process multiple files in batch
 - Docker container for easy deployment
-- Integration with LinTO platform
+- Enhanced integration with LinTO platform
 
 ## Contributing
 
