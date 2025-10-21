@@ -68,9 +68,9 @@ pip install pydub gradio
 
 ## Usage
 
-### Option 1: Web Interface (Docker)
+### Option 1: Web Interface (Docker) - Recommended
 
-The easiest way to use Speaker Splitter is through the web interface using Docker:
+The easiest way to use Speaker Splitter is through the web interface using Docker with integrated WhisperX support:
 
 1. Start the application using Docker Compose:
 ```bash
@@ -82,11 +82,18 @@ docker-compose up -d
 http://localhost:5000
 ```
 
-3. Upload your WAV audio file and JSON diarization file through the web interface
+3. Choose your processing mode:
+   - **Automatic Mode (WhisperX)**: Upload only your WAV file. WhisperX will automatically transcribe and identify speakers
+   - **Manual Mode**: Upload both WAV and JSON diarization files for precise control
 
-4. Download the separated audio files for each speaker
+4. (Optional for Automatic Mode) Configure WhisperX settings:
+   - Select Whisper model (tiny, base, small, medium, large-v2, large-v3)
+   - Choose device (CPU or CUDA/GPU)
+   - Provide HuggingFace token for speaker diarization
 
-5. To stop the application:
+5. Download the separated audio files for each speaker (plus the generated diarization JSON in automatic mode)
+
+6. To stop the application:
 ```bash
 docker-compose down
 ```
@@ -100,6 +107,7 @@ You can customize the application by creating a `.env` file:
 ```bash
 SECRET_KEY=your-secret-key-here
 PORT=5000
+HF_TOKEN=your-huggingface-token-here  # For automatic speaker diarization
 ```
 
 ### Option 2: Command Line Interface
@@ -238,14 +246,17 @@ The script includes error handling for common issues:
 - ✅ Simple web interface for file upload and processing
 - ✅ Docker container for easy deployment
 - ✅ Real-time processing status
+- ✅ WhisperX Integration: Full integration of WhisperX for automatic transcription and diarization
+- ✅ Dual-mode operation: Automatic (WhisperX) and Manual (JSON upload)
+- ✅ Speaker-separated audio output with one file per speaker
 
 ### Future Developments (not planned yet)
-- WhisperX Integration: a major planned enhancement is the direct integration of WhisperX for a complete transcription and diarization workflow
 - Audio Format Support: add support for additional audio formats such as MP3, FLAC, etc.
 - Cross-fade between segments to reduce abrupt transitions
 - Speech overlap detection and handling
 - Process multiple files in batch
 - Integration with LinTO platform
+- GPU acceleration support in Docker for faster WhisperX processing
 
 ## Contributing
 

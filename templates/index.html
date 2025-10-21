@@ -227,8 +227,11 @@
         <p class="subtitle">Separate multi-speaker audio files with AI-powered diarization</p>
 
         <div class="info-box">
-            <strong>How it works:</strong> Upload your WAV audio file and a JSON file containing speaker diarization data.
-            The tool will create separate audio files for each speaker.
+            <strong>Two modes available:</strong>
+            <ul style="margin: 10px 0 0 20px;">
+                <li><strong>Automatic Mode:</strong> Upload only a WAV file. WhisperX will automatically transcribe and identify speakers.</li>
+                <li><strong>Manual Mode:</strong> Upload both WAV and JSON diarization files for precise control.</li>
+            </ul>
         </div>
 
         <form id="uploadForm" enctype="multipart/form-data">
@@ -244,14 +247,53 @@
             </div>
 
             <div class="upload-section">
-                <label for="json_file">Diarization Data (JSON format)</label>
+                <label for="json_file">Diarization Data (JSON format) - Optional</label>
                 <div class="file-input-wrapper">
-                    <input type="file" id="json_file" name="json_file" accept=".json" required>
+                    <input type="file" id="json_file" name="json_file" accept=".json">
                     <label for="json_file" class="file-input-label" id="jsonLabel">
-                        <span>📄 Choose JSON file</span>
+                        <span>📄 Choose JSON file (optional)</span>
                         <div class="file-name" id="jsonFileName"></div>
                     </label>
                 </div>
+                <div style="font-size: 0.85em; color: #666; margin-top: 5px;">
+                    Leave empty to use automatic WhisperX processing
+                </div>
+            </div>
+
+            <div class="upload-section" id="whisperxSettings">
+                <details>
+                    <summary style="cursor: pointer; color: #667eea; font-weight: 500; margin-bottom: 10px;">
+                        ⚙️ Advanced WhisperX Settings (Optional)
+                    </summary>
+                    <div style="padding: 15px; background: #f8f9fa; border-radius: 8px; margin-top: 10px;">
+                        <div style="margin-bottom: 10px;">
+                            <label style="font-size: 0.9em; color: #555;">Whisper Model:</label>
+                            <select id="model" name="model" style="width: 100%; padding: 8px; border: 1px solid #ddd; border-radius: 5px; margin-top: 5px;">
+                                <option value="tiny">Tiny (fastest, least accurate)</option>
+                                <option value="base" selected>Base (recommended)</option>
+                                <option value="small">Small (better quality)</option>
+                                <option value="medium">Medium (high quality, slower)</option>
+                                <option value="large-v2">Large V2 (best quality, slowest)</option>
+                                <option value="large-v3">Large V3 (newest, best quality)</option>
+                            </select>
+                        </div>
+                        <div style="margin-bottom: 10px;">
+                            <label style="font-size: 0.9em; color: #555;">Device:</label>
+                            <select id="device" name="device" style="width: 100%; padding: 8px; border: 1px solid #ddd; border-radius: 5px; margin-top: 5px;">
+                                <option value="cpu" selected>CPU</option>
+                                <option value="cuda">CUDA (GPU)</option>
+                            </select>
+                        </div>
+                        <div style="margin-bottom: 10px;">
+                            <label style="font-size: 0.9em; color: #555;">HuggingFace Token (for speaker diarization):</label>
+                            <input type="text" id="hf_token" name="hf_token" placeholder="hf_..."
+                                   style="width: 100%; padding: 8px; border: 1px solid #ddd; border-radius: 5px; margin-top: 5px; font-family: monospace;">
+                            <div style="font-size: 0.8em; color: #666; margin-top: 3px;">
+                                Required for speaker identification. Get token from <a href="https://huggingface.co/settings/tokens" target="_blank" style="color: #667eea;">huggingface.co</a>
+                            </div>
+                        </div>
+                    </div>
+                </details>
             </div>
 
             <button type="submit" class="btn" id="submitBtn">
@@ -310,6 +352,14 @@
 
             const formData = new FormData(this);
 
+            // Add WhisperX settings to form data
+            formData.append('model', document.getElementById('model').value);
+            formData.append('device', document.getElementById('device').value);
+            const hfToken = document.getElementById('hf_token').value;
+            if (hfToken) {
+                formData.append('hf_token', hfToken);
+            }
+
             // Reset UI
             statusDiv.className = 'status';
             statusDiv.style.display = 'none';
@@ -317,9 +367,13 @@
             submitBtn.disabled = true;
             spinner.classList.add('show');
 
+            // Determine processing mode
+            const hasJson = jsonInput.files && jsonInput.files[0];
+            const processingMode = hasJson ? 'Manual mode' : 'WhisperX automatic mode';
+
             // Show processing status
             statusDiv.className = 'status processing';
-            statusDiv.textContent = 'Processing your audio files... This may take a few minutes.';
+            statusDiv.textContent = `Processing with ${processingMode}... This may take several minutes.`;
 
             try {
                 const response = await fetch('/upload', {
@@ -333,7 +387,8 @@
                     // Success
                     currentSessionId = data.session_id;
                     statusDiv.className = 'status success';
-                    statusDiv.textContent = data.message;
+                    const modeText = data.method === 'whisperx' ? ' (using WhisperX)' : '';
+                    statusDiv.textContent = data.message + modeText;
 
                     // Display speaker results
                     speakerList.innerHTML = '';

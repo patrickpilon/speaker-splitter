@@ -11,9 +11,10 @@ import os
 import json
 from pathlib import Path
 import sys
-from speaker_splitter import process_audio, timestamp_to_milliseconds
+from speaker_splitter import process_audio, timestamp_to_milliseconds, run_whisperx, convert_whisperx_to_json
 import zipfile
 import io
+import logging
 
 app = Flask(__name__)
 app.secret_key = os.environ.get('SECRET_KEY', 'dev-secret-key-change-in-production')
@@ -41,43 +42,85 @@ def index():
 @app.route('/upload', methods=['POST'])
 def upload_files():
     """Handle file upload and processing."""
-    # Check if files are present
-    if 'audio_file' not in request.files or 'json_file' not in request.files:
-        return jsonify({'error': 'Both audio and JSON files are required'}), 400
+    # Check if audio file is present (required)
+    if 'audio_file' not in request.files:
+        return jsonify({'error': 'Audio file is required'}), 400
 
     audio_file = request.files['audio_file']
-    json_file = request.files['json_file']
 
-    # Check if files are selected
-    if audio_file.filename == '' or json_file.filename == '':
-        return jsonify({'error': 'No files selected'}), 400
+    # Check if audio file is selected
+    if audio_file.filename == '':
+        return jsonify({'error': 'No audio file selected'}), 400
 
-    # Validate file extensions
+    # Validate audio file extension
     if not allowed_file(audio_file.filename, ALLOWED_AUDIO_EXTENSIONS):
         return jsonify({'error': 'Audio file must be in WAV format'}), 400
 
-    if not allowed_file(json_file.filename, ALLOWED_JSON_EXTENSIONS):
-        return jsonify({'error': 'Diarization file must be in JSON format'}), 400
+    audio_path = None
+    json_path = None
 
     try:
-        # Save uploaded files
+        # Save uploaded audio file
         audio_filename = secure_filename(audio_file.filename)
-        json_filename = secure_filename(json_file.filename)
-
         audio_path = os.path.join(app.config['UPLOAD_FOLDER'], audio_filename)
-        json_path = os.path.join(app.config['UPLOAD_FOLDER'], json_filename)
-
         audio_file.save(audio_path)
-        json_file.save(json_path)
 
-        # Load JSON to get speaker info
-        with open(json_path, 'r', encoding='utf-8') as f:
-            segments_data = json.load(f)
+        # Check if JSON file is provided
+        json_file = request.files.get('json_file')
+        use_whisperx = False
+
+        if json_file and json_file.filename != '':
+            # Manual mode: JSON file provided
+            if not allowed_file(json_file.filename, ALLOWED_JSON_EXTENSIONS):
+                return jsonify({'error': 'Diarization file must be in JSON format'}), 400
+
+            json_filename = secure_filename(json_file.filename)
+            json_path = os.path.join(app.config['UPLOAD_FOLDER'], json_filename)
+            json_file.save(json_path)
+
+            # Load JSON to get speaker info
+            with open(json_path, 'r', encoding='utf-8') as f:
+                segments_data = json.load(f)
+        else:
+            # Automatic mode: Use WhisperX for transcription and diarization
+            use_whisperx = True
+            logging.info("No JSON file provided. Running WhisperX for automatic diarization...")
+
+            # Get WhisperX parameters from request
+            model_name = request.form.get('model', 'base')
+            device = request.form.get('device', 'cpu')
+            compute_type = request.form.get('compute_type', 'float32')
+            hf_token = request.form.get('hf_token', os.environ.get('HF_TOKEN'))
+
+            try:
+                # Run WhisperX
+                whisperx_result = run_whisperx(
+                    audio_path,
+                    model_name=model_name,
+                    device=device,
+                    compute_type=compute_type,
+                    hf_token=hf_token
+                )
+
+                # Convert to JSON format
+                segments_data = convert_whisperx_to_json(whisperx_result)
+
+                # Save JSON for reference
+                session_id = os.path.splitext(audio_filename)[0]
+                output_dir = os.path.join(app.config['OUTPUT_FOLDER'], session_id)
+                os.makedirs(output_dir, exist_ok=True)
+                json_path = os.path.join(output_dir, 'diarization.json')
+                with open(json_path, 'w', encoding='utf-8') as f:
+                    json.dump(segments_data, f, indent=2, ensure_ascii=False)
+
+            except Exception as e:
+                logging.error(f"WhisperX processing failed: {str(e)}")
+                return jsonify({'error': f'WhisperX processing failed: {str(e)}'}), 500
 
         speakers = set(segment['speaker'] for segment in segments_data.get('segments', []))
 
         if not speakers:
-            return jsonify({'error': 'No speaker segments found in JSON file'}), 400
+            return jsonify({'error': 'No speaker segments found'}), 400
 
         # Create output directory for this session
         session_id = os.path.splitext(audio_filename)[0]
@@ -99,28 +142,34 @@ def upload_files():
                 'path': output_path
             })
 
-        # Create a ZIP file with all outputs
+        # Create a ZIP file with all outputs (including diarization JSON if WhisperX was used)
         zip_path = os.path.join(output_dir, 'separated_audio.zip')
         with zipfile.ZipFile(zip_path, 'w') as zipf:
             for output_file in output_files:
                 zipf.write(output_file['path'], arcname=output_file['filename'])
+            # Include diarization JSON if it was generated
+            if use_whisperx and json_path and os.path.exists(json_path):
+                zipf.write(json_path, arcname='diarization.json')
 
         return jsonify({
             'success': True,
             'message': f'Successfully processed {len(speakers)} speakers',
             'speakers': [f['speaker'] for f in output_files],
-            'session_id': session_id
+            'session_id': session_id,
+            'method': 'whisperx' if use_whisperx else 'manual'
         })
 
     except json.JSONDecodeError:
         return jsonify({'error': 'Invalid JSON format'}), 400
     except Exception as e:
+        logging.error(f"Processing error: {str(e)}")
         return jsonify({'error': f'Processing error: {str(e)}'}), 500
     finally:
         # Clean up uploaded files
-        if os.path.exists(audio_path):
+        if audio_path and os.path.exists(audio_path):
             os.remove(audio_path)
-        if os.path.exists(json_path):
+        if json_path and os.path.exists(json_path) and not use_whisperx:
+            # Don't delete JSON if it was generated by WhisperX (it's in output folder)
             os.remove(json_path)
 
 @app.route('/download/<session_id>')

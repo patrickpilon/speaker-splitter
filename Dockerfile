@@ -4,10 +4,12 @@ FROM python:3.11-slim
 # Set working directory
 WORKDIR /app
 
-# Install system dependencies (ffmpeg required by pydub)
+# Install system dependencies (ffmpeg required by pydub, git and build tools for WhisperX)
 RUN apt-get update && \
     apt-get install -y --no-install-recommends \
     ffmpeg \
+    git \
+    build-essential \
     && rm -rf /var/lib/apt/lists/*
 
 # Copy requirements first for better caching
