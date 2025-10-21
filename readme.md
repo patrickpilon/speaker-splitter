@@ -35,7 +35,12 @@ conda activate audio-splitter
 
 3. Install required Python packages:
 ```bash
-pip install pydub
+pip install -r requirements.txt
+```
+
+Or manually install:
+```bash
+pip install pydub gradio
 ```
 
 4. Install FFmpeg:
@@ -49,6 +54,24 @@ pip install pydub
   ```
 
 ## Usage
+
+### Option 1: Web UI (Recommended for Easy Use)
+
+Launch the Gradio web interface for a user-friendly experience:
+
+```bash
+python app.py
+```
+
+This will start a web server and open a browser window where you can:
+1. Upload your WAV audio file
+2. Upload your JSON diarization file
+3. Click "Split Speakers"
+4. Download the individual speaker files
+
+The web UI provides real-time status updates and easy file management.
+
+### Option 2: Command Line Interface
 
 The basic command format is:
 ```bash
@@ -131,7 +154,7 @@ The script includes error handling for common issues:
 - WhisperX Integration: a major planned enhancement is the direct integration of WhisperX for a complete transcription and diarization workflow
 - Audio Format Support: add support for additional audio formats such as MP3, FLAC, etc.
 - Cross-fade between segments to reduce abrupt transitions
-- Simple web interface for file upload and processing and real-time processing status
+- ✅ ~~Simple web interface for file upload and processing and real-time processing status~~ **DONE - Gradio UI available!**
 - Speech overlap detection and handling
 - Process multiple files in batch
 - Docker container for easy deployment
