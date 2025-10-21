@@ -1,0 +1,681 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>JSON Diarization Editor - Speaker Splitter</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            padding: 20px;
+        }
+
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            background: white;
+            border-radius: 12px;
+            box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
+            overflow: hidden;
+        }
+
+        .header {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            padding: 30px;
+            text-align: center;
+        }
+
+        .header h1 {
+            font-size: 2rem;
+            margin-bottom: 10px;
+        }
+
+        .header p {
+            opacity: 0.9;
+            font-size: 0.95rem;
+        }
+
+        .content {
+            padding: 30px;
+        }
+
+        .section {
+            margin-bottom: 30px;
+        }
+
+        .section-title {
+            font-size: 1.3rem;
+            color: #333;
+            margin-bottom: 15px;
+            padding-bottom: 10px;
+            border-bottom: 2px solid #667eea;
+        }
+
+        .form-group {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 15px;
+            margin-bottom: 15px;
+        }
+
+        .form-field {
+            display: flex;
+            flex-direction: column;
+        }
+
+        label {
+            font-weight: 600;
+            color: #555;
+            margin-bottom: 5px;
+            font-size: 0.9rem;
+        }
+
+        input, textarea {
+            padding: 10px;
+            border: 2px solid #e0e0e0;
+            border-radius: 6px;
+            font-size: 0.95rem;
+            transition: border-color 0.3s;
+        }
+
+        input:focus, textarea:focus {
+            outline: none;
+            border-color: #667eea;
+        }
+
+        textarea {
+            resize: vertical;
+            min-height: 60px;
+            font-family: inherit;
+        }
+
+        .btn {
+            padding: 12px 24px;
+            border: none;
+            border-radius: 6px;
+            font-size: 0.95rem;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s;
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .btn-primary {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+        }
+
+        .btn-primary:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 5px 15px rgba(102, 126, 234, 0.4);
+        }
+
+        .btn-secondary {
+            background: #6c757d;
+            color: white;
+        }
+
+        .btn-secondary:hover {
+            background: #5a6268;
+        }
+
+        .btn-success {
+            background: #28a745;
+            color: white;
+        }
+
+        .btn-success:hover {
+            background: #218838;
+        }
+
+        .btn-danger {
+            background: #dc3545;
+            color: white;
+        }
+
+        .btn-danger:hover {
+            background: #c82333;
+        }
+
+        .btn-small {
+            padding: 6px 12px;
+            font-size: 0.85rem;
+        }
+
+        .button-group {
+            display: flex;
+            gap: 10px;
+            flex-wrap: wrap;
+        }
+
+        .segments-list {
+            border: 2px solid #e0e0e0;
+            border-radius: 8px;
+            overflow: hidden;
+        }
+
+        .segment-item {
+            padding: 15px;
+            border-bottom: 1px solid #e0e0e0;
+            display: flex;
+            justify-content: space-between;
+            align-items: start;
+            gap: 15px;
+            transition: background 0.2s;
+        }
+
+        .segment-item:hover {
+            background: #f8f9fa;
+        }
+
+        .segment-item:last-child {
+            border-bottom: none;
+        }
+
+        .segment-info {
+            flex: 1;
+        }
+
+        .segment-speaker {
+            font-weight: 700;
+            color: #667eea;
+            font-size: 1.1rem;
+            margin-bottom: 5px;
+        }
+
+        .segment-time {
+            color: #666;
+            font-size: 0.9rem;
+            margin-bottom: 5px;
+        }
+
+        .segment-text {
+            color: #333;
+            font-style: italic;
+        }
+
+        .segment-actions {
+            display: flex;
+            gap: 5px;
+        }
+
+        .json-preview {
+            background: #1e1e1e;
+            color: #d4d4d4;
+            padding: 20px;
+            border-radius: 8px;
+            overflow-x: auto;
+            font-family: 'Courier New', monospace;
+            font-size: 0.9rem;
+            line-height: 1.5;
+            max-height: 400px;
+        }
+
+        .empty-state {
+            text-align: center;
+            padding: 40px;
+            color: #999;
+        }
+
+        .empty-state svg {
+            width: 64px;
+            height: 64px;
+            margin-bottom: 15px;
+            opacity: 0.5;
+        }
+
+        .alert {
+            padding: 12px 16px;
+            border-radius: 6px;
+            margin-bottom: 15px;
+            display: none;
+        }
+
+        .alert.show {
+            display: block;
+        }
+
+        .alert-success {
+            background: #d4edda;
+            color: #155724;
+            border: 1px solid #c3e6cb;
+        }
+
+        .alert-error {
+            background: #f8d7da;
+            color: #721c24;
+            border: 1px solid #f5c6cb;
+        }
+
+        .file-input-wrapper {
+            position: relative;
+            overflow: hidden;
+            display: inline-block;
+        }
+
+        .file-input-wrapper input[type=file] {
+            position: absolute;
+            left: -9999px;
+        }
+
+        .help-text {
+            font-size: 0.85rem;
+            color: #666;
+            margin-top: 5px;
+        }
+
+        @media (max-width: 768px) {
+            .form-group {
+                grid-template-columns: 1fr;
+            }
+
+            .segment-item {
+                flex-direction: column;
+            }
+
+            .segment-actions {
+                width: 100%;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>JSON Diarization Editor</h1>
+            <p>Create and edit speaker diarization files for Speaker Splitter</p>
+        </div>
+
+        <div class="content">
+            <!-- Alert Messages -->
+            <div id="alert" class="alert"></div>
+
+            <!-- Add/Edit Segment Form -->
+            <div class="section">
+                <h2 class="section-title">Add Speaker Segment</h2>
+                <form id="segmentForm">
+                    <div class="form-group">
+                        <div class="form-field">
+                            <label for="speakerId">Speaker ID*</label>
+                            <input type="text" id="speakerId" placeholder="SPEAKER_00" required>
+                            <span class="help-text">e.g., SPEAKER_00, SPEAKER_01</span>
+                        </div>
+                        <div class="form-field">
+                            <label for="startTime">Start Time*</label>
+                            <input type="text" id="startTime" placeholder="00:00:00,000" required pattern="\d{2}:\d{2}:\d{2},\d{3}">
+                            <span class="help-text">Format: HH:MM:SS,MMM</span>
+                        </div>
+                        <div class="form-field">
+                            <label for="endTime">End Time*</label>
+                            <input type="text" id="endTime" placeholder="00:00:05,000" required pattern="\d{2}:\d{2}:\d{2},\d{3}">
+                            <span class="help-text">Format: HH:MM:SS,MMM</span>
+                        </div>
+                    </div>
+                    <div class="form-group">
+                        <div class="form-field">
+                            <label for="segmentText">Text (Optional)</label>
+                            <textarea id="segmentText" placeholder="Enter the spoken text..."></textarea>
+                        </div>
+                    </div>
+                    <div class="button-group">
+                        <button type="submit" class="btn btn-primary" id="addBtn">
+                            <span>➕</span> Add Segment
+                        </button>
+                        <button type="button" class="btn btn-secondary" id="cancelEditBtn" style="display: none;">
+                            Cancel Edit
+                        </button>
+                    </div>
+                </form>
+            </div>
+
+            <!-- Segments List -->
+            <div class="section">
+                <h2 class="section-title">Segments (<span id="segmentCount">0</span>)</h2>
+                <div id="segmentsList" class="segments-list">
+                    <div class="empty-state">
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                            <path d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z"></path>
+                        </svg>
+                        <p>No segments added yet. Add your first segment above.</p>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Import/Export -->
+            <div class="section">
+                <h2 class="section-title">Import / Export</h2>
+                <div class="button-group">
+                    <div class="file-input-wrapper">
+                        <label for="importFile" class="btn btn-secondary">
+                            <span>📂</span> Import JSON
+                        </label>
+                        <input type="file" id="importFile" accept=".json">
+                    </div>
+                    <button class="btn btn-success" id="exportBtn">
+                        <span>💾</span> Export JSON
+                    </button>
+                    <button class="btn btn-danger" id="clearBtn">
+                        <span>🗑️</span> Clear All
+                    </button>
+                </div>
+            </div>
+
+            <!-- JSON Preview -->
+            <div class="section">
+                <h2 class="section-title">JSON Preview</h2>
+                <pre id="jsonPreview" class="json-preview">{
+  "segments": []
+}</pre>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // Application state
+        let segments = [];
+        let editingIndex = -1;
+
+        // DOM elements
+        const form = document.getElementById('segmentForm');
+        const segmentsList = document.getElementById('segmentsList');
+        const jsonPreview = document.getElementById('jsonPreview');
+        const segmentCount = document.getElementById('segmentCount');
+        const alert = document.getElementById('alert');
+        const addBtn = document.getElementById('addBtn');
+        const cancelEditBtn = document.getElementById('cancelEditBtn');
+
+        // Form fields
+        const speakerIdInput = document.getElementById('speakerId');
+        const startTimeInput = document.getElementById('startTime');
+        const endTimeInput = document.getElementById('endTime');
+        const segmentTextInput = document.getElementById('segmentText');
+
+        // Initialize
+        updateUI();
+
+        // Form submission
+        form.addEventListener('submit', (e) => {
+            e.preventDefault();
+
+            const speaker = speakerIdInput.value.trim();
+            const start = startTimeInput.value.trim();
+            const end = endTimeInput.value.trim();
+            const text = segmentTextInput.value.trim();
+
+            // Validate timestamp format
+            if (!validateTimestamp(start) || !validateTimestamp(end)) {
+                showAlert('Invalid timestamp format. Use HH:MM:SS,MMM', 'error');
+                return;
+            }
+
+            // Validate that end time is after start time
+            if (!isEndTimeAfterStart(start, end)) {
+                showAlert('End time must be after start time', 'error');
+                return;
+            }
+
+            const segment = {
+                speaker,
+                start,
+                end
+            };
+
+            // Only add text if it's not empty
+            if (text) {
+                segment.text = text;
+            }
+
+            if (editingIndex >= 0) {
+                // Update existing segment
+                segments[editingIndex] = segment;
+                showAlert('Segment updated successfully', 'success');
+                editingIndex = -1;
+                addBtn.innerHTML = '<span>➕</span> Add Segment';
+                cancelEditBtn.style.display = 'none';
+            } else {
+                // Add new segment
+                segments.push(segment);
+                showAlert('Segment added successfully', 'success');
+            }
+
+            // Sort segments by start time
+            sortSegments();
+
+            // Reset form and update UI
+            form.reset();
+            updateUI();
+        });
+
+        // Cancel edit
+        cancelEditBtn.addEventListener('click', () => {
+            editingIndex = -1;
+            form.reset();
+            addBtn.innerHTML = '<span>➕</span> Add Segment';
+            cancelEditBtn.style.display = 'none';
+            showAlert('Edit cancelled', 'success');
+        });
+
+        // Export JSON
+        document.getElementById('exportBtn').addEventListener('click', () => {
+            if (segments.length === 0) {
+                showAlert('No segments to export', 'error');
+                return;
+            }
+
+            const json = JSON.stringify({ segments }, null, 2);
+            const blob = new Blob([json], { type: 'application/json' });
+            const url = URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = 'diarization.json';
+            a.click();
+            URL.revokeObjectURL(url);
+            showAlert('JSON file downloaded successfully', 'success');
+        });
+
+        // Import JSON
+        document.getElementById('importFile').addEventListener('change', (e) => {
+            const file = e.target.files[0];
+            if (!file) return;
+
+            const reader = new FileReader();
+            reader.onload = (event) => {
+                try {
+                    const data = JSON.parse(event.target.result);
+
+                    if (!data.segments || !Array.isArray(data.segments)) {
+                        throw new Error('Invalid JSON format. Expected "segments" array.');
+                    }
+
+                    // Validate each segment
+                    for (const segment of data.segments) {
+                        if (!segment.speaker || !segment.start || !segment.end) {
+                            throw new Error('Each segment must have speaker, start, and end fields.');
+                        }
+                        if (!validateTimestamp(segment.start) || !validateTimestamp(segment.end)) {
+                            throw new Error('Invalid timestamp format in imported file.');
+                        }
+                    }
+
+                    segments = data.segments;
+                    sortSegments();
+                    updateUI();
+                    showAlert('JSON imported successfully', 'success');
+                } catch (error) {
+                    showAlert('Error importing JSON: ' + error.message, 'error');
+                }
+            };
+            reader.readAsText(file);
+            e.target.value = ''; // Reset file input
+        });
+
+        // Clear all segments
+        document.getElementById('clearBtn').addEventListener('click', () => {
+            if (segments.length === 0) {
+                showAlert('No segments to clear', 'error');
+                return;
+            }
+
+            if (confirm('Are you sure you want to clear all segments?')) {
+                segments = [];
+                editingIndex = -1;
+                form.reset();
+                addBtn.innerHTML = '<span>➕</span> Add Segment';
+                cancelEditBtn.style.display = 'none';
+                updateUI();
+                showAlert('All segments cleared', 'success');
+            }
+        });
+
+        // Edit segment
+        function editSegment(index) {
+            const segment = segments[index];
+            speakerIdInput.value = segment.speaker;
+            startTimeInput.value = segment.start;
+            endTimeInput.value = segment.end;
+            segmentTextInput.value = segment.text || '';
+
+            editingIndex = index;
+            addBtn.innerHTML = '<span>✏️</span> Update Segment';
+            cancelEditBtn.style.display = 'inline-flex';
+
+            // Scroll to form
+            form.scrollIntoView({ behavior: 'smooth' });
+        }
+
+        // Delete segment
+        function deleteSegment(index) {
+            if (confirm('Are you sure you want to delete this segment?')) {
+                segments.splice(index, 1);
+                if (editingIndex === index) {
+                    editingIndex = -1;
+                    form.reset();
+                    addBtn.innerHTML = '<span>➕</span> Add Segment';
+                    cancelEditBtn.style.display = 'none';
+                }
+                updateUI();
+                showAlert('Segment deleted', 'success');
+            }
+        }
+
+        // Update UI
+        function updateUI() {
+            updateSegmentsList();
+            updateJSONPreview();
+            updateSegmentCount();
+        }
+
+        // Update segments list
+        function updateSegmentsList() {
+            if (segments.length === 0) {
+                segmentsList.innerHTML = `
+                    <div class="empty-state">
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                            <path d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z"></path>
+                        </svg>
+                        <p>No segments added yet. Add your first segment above.</p>
+                    </div>
+                `;
+                return;
+            }
+
+            segmentsList.innerHTML = segments.map((segment, index) => `
+                <div class="segment-item">
+                    <div class="segment-info">
+                        <div class="segment-speaker">${escapeHtml(segment.speaker)}</div>
+                        <div class="segment-time">⏱️ ${escapeHtml(segment.start)} → ${escapeHtml(segment.end)}</div>
+                        ${segment.text ? `<div class="segment-text">"${escapeHtml(segment.text)}"</div>` : ''}
+                    </div>
+                    <div class="segment-actions">
+                        <button class="btn btn-secondary btn-small" onclick="editSegment(${index})">✏️ Edit</button>
+                        <button class="btn btn-danger btn-small" onclick="deleteSegment(${index})">🗑️ Delete</button>
+                    </div>
+                </div>
+            `).join('');
+        }
+
+        // Update JSON preview
+        function updateJSONPreview() {
+            const json = JSON.stringify({ segments }, null, 2);
+            jsonPreview.textContent = json;
+        }
+
+        // Update segment count
+        function updateSegmentCount() {
+            segmentCount.textContent = segments.length;
+        }
+
+        // Validate timestamp format (HH:MM:SS,MMM)
+        function validateTimestamp(timestamp) {
+            const regex = /^(\d{2}):(\d{2}):(\d{2}),(\d{3})$/;
+            const match = timestamp.match(regex);
+
+            if (!match) return false;
+
+            const hours = parseInt(match[1]);
+            const minutes = parseInt(match[2]);
+            const seconds = parseInt(match[3]);
+            const milliseconds = parseInt(match[4]);
+
+            return hours >= 0 && hours <= 99 &&
+                   minutes >= 0 && minutes <= 59 &&
+                   seconds >= 0 && seconds <= 59 &&
+                   milliseconds >= 0 && milliseconds <= 999;
+        }
+
+        // Convert timestamp to milliseconds
+        function timestampToMs(timestamp) {
+            const match = timestamp.match(/^(\d{2}):(\d{2}):(\d{2}),(\d{3})$/);
+            if (!match) return 0;
+
+            const hours = parseInt(match[1]);
+            const minutes = parseInt(match[2]);
+            const seconds = parseInt(match[3]);
+            const milliseconds = parseInt(match[4]);
+
+            return (hours * 3600 + minutes * 60 + seconds) * 1000 + milliseconds;
+        }
+
+        // Check if end time is after start time
+        function isEndTimeAfterStart(start, end) {
+            return timestampToMs(end) > timestampToMs(start);
+        }
+
+        // Sort segments by start time
+        function sortSegments() {
+            segments.sort((a, b) => timestampToMs(a.start) - timestampToMs(b.start));
+        }
+
+        // Show alert message
+        function showAlert(message, type) {
+            alert.textContent = message;
+            alert.className = 'alert alert-' + type + ' show';
+            setTimeout(() => {
+                alert.className = 'alert alert-' + type;
+            }, 3000);
+        }
+
+        // Escape HTML to prevent XSS
+        function escapeHtml(text) {
+            const div = document.createElement('div');
+            div.textContent = text;
+            return div.innerHTML;
+        }
+
+        // Make functions globally accessible
+        window.editSegment = editSegment;
+        window.deleteSegment = deleteSegment;
+    </script>
+</body>
+</html>
