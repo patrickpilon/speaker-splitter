@@ -50,6 +50,42 @@ pip install pydub
 
 ## Usage
 
+### Option 1: Web Interface (Docker)
+
+The easiest way to use Speaker Splitter is through the web interface using Docker:
+
+1. Start the application using Docker Compose:
+```bash
+docker-compose up -d
+```
+
+2. Open your browser and navigate to:
+```
+http://localhost:5000
+```
+
+3. Upload your WAV audio file and JSON diarization file through the web interface
+
+4. Download the separated audio files for each speaker
+
+5. To stop the application:
+```bash
+docker-compose down
+```
+
+**Docker Requirements:**
+- Docker 20.10 or higher
+- Docker Compose 1.29 or higher
+
+**Environment Variables:**
+You can customize the application by creating a `.env` file:
+```bash
+SECRET_KEY=your-secret-key-here
+PORT=5000
+```
+
+### Option 2: Command Line Interface
+
 The basic command format is:
 ```bash
 python speaker_splitter.py input.wav diarization.json
@@ -127,14 +163,19 @@ The script includes error handling for common issues:
 - Invalid timestamps
 - Python version verification
 
-## Future Developments (not planned yet)
+## Features Roadmap
+
+### Completed
+- ✅ Simple web interface for file upload and processing
+- ✅ Docker container for easy deployment
+- ✅ Real-time processing status
+
+### Future Developments (not planned yet)
 - WhisperX Integration: a major planned enhancement is the direct integration of WhisperX for a complete transcription and diarization workflow
 - Audio Format Support: add support for additional audio formats such as MP3, FLAC, etc.
 - Cross-fade between segments to reduce abrupt transitions
-- Simple web interface for file upload and processing and real-time processing status
 - Speech overlap detection and handling
 - Process multiple files in batch
-- Docker container for easy deployment
 - Integration with LinTO platform
 
 ## Contributing

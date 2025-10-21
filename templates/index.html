@@ -1,0 +1,375 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Speaker Splitter - Audio Separation Tool</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            padding: 20px;
+        }
+
+        .container {
+            background: white;
+            border-radius: 20px;
+            box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
+            padding: 40px;
+            max-width: 600px;
+            width: 100%;
+        }
+
+        h1 {
+            color: #333;
+            margin-bottom: 10px;
+            text-align: center;
+            font-size: 2em;
+        }
+
+        .subtitle {
+            color: #666;
+            text-align: center;
+            margin-bottom: 30px;
+            font-size: 0.95em;
+        }
+
+        .upload-section {
+            margin-bottom: 25px;
+        }
+
+        .upload-section label {
+            display: block;
+            color: #555;
+            margin-bottom: 8px;
+            font-weight: 500;
+        }
+
+        .file-input-wrapper {
+            position: relative;
+            overflow: hidden;
+            display: inline-block;
+            width: 100%;
+        }
+
+        .file-input-wrapper input[type=file] {
+            position: absolute;
+            left: -9999px;
+        }
+
+        .file-input-label {
+            display: block;
+            padding: 15px;
+            background: #f8f9fa;
+            border: 2px dashed #ddd;
+            border-radius: 10px;
+            text-align: center;
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+
+        .file-input-label:hover {
+            background: #e9ecef;
+            border-color: #667eea;
+        }
+
+        .file-input-label.has-file {
+            background: #e7f3ff;
+            border-color: #667eea;
+            border-style: solid;
+        }
+
+        .file-name {
+            color: #667eea;
+            font-weight: 500;
+            margin-top: 5px;
+        }
+
+        .btn {
+            width: 100%;
+            padding: 15px;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            border: none;
+            border-radius: 10px;
+            font-size: 1.1em;
+            font-weight: 600;
+            cursor: pointer;
+            transition: transform 0.2s ease, box-shadow 0.2s ease;
+            margin-top: 10px;
+        }
+
+        .btn:hover:not(:disabled) {
+            transform: translateY(-2px);
+            box-shadow: 0 5px 20px rgba(102, 126, 234, 0.4);
+        }
+
+        .btn:disabled {
+            opacity: 0.6;
+            cursor: not-allowed;
+        }
+
+        .status {
+            margin-top: 20px;
+            padding: 15px;
+            border-radius: 10px;
+            text-align: center;
+            display: none;
+        }
+
+        .status.error {
+            background: #fee;
+            color: #c33;
+            border: 1px solid #fcc;
+            display: block;
+        }
+
+        .status.success {
+            background: #efe;
+            color: #3a3;
+            border: 1px solid #cfc;
+            display: block;
+        }
+
+        .status.processing {
+            background: #fef9e7;
+            color: #856404;
+            border: 1px solid #ffeaa7;
+            display: block;
+        }
+
+        .results {
+            margin-top: 20px;
+            display: none;
+        }
+
+        .results.show {
+            display: block;
+        }
+
+        .speaker-item {
+            padding: 12px;
+            background: #f8f9fa;
+            border-radius: 8px;
+            margin-bottom: 10px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .download-link {
+            color: #667eea;
+            text-decoration: none;
+            font-weight: 500;
+            padding: 8px 16px;
+            background: white;
+            border-radius: 6px;
+            transition: all 0.2s ease;
+        }
+
+        .download-link:hover {
+            background: #667eea;
+            color: white;
+        }
+
+        .download-all {
+            margin-top: 15px;
+        }
+
+        .spinner {
+            border: 3px solid #f3f3f3;
+            border-top: 3px solid #667eea;
+            border-radius: 50%;
+            width: 30px;
+            height: 30px;
+            animation: spin 1s linear infinite;
+            margin: 10px auto;
+            display: none;
+        }
+
+        .spinner.show {
+            display: block;
+        }
+
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+
+        .info-box {
+            background: #e7f3ff;
+            border-left: 4px solid #667eea;
+            padding: 15px;
+            margin-bottom: 25px;
+            border-radius: 5px;
+            font-size: 0.9em;
+            color: #555;
+        }
+
+        .info-box strong {
+            color: #667eea;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>🎙️ Speaker Splitter</h1>
+        <p class="subtitle">Separate multi-speaker audio files with AI-powered diarization</p>
+
+        <div class="info-box">
+            <strong>How it works:</strong> Upload your WAV audio file and a JSON file containing speaker diarization data.
+            The tool will create separate audio files for each speaker.
+        </div>
+
+        <form id="uploadForm" enctype="multipart/form-data">
+            <div class="upload-section">
+                <label for="audio_file">Audio File (WAV format)</label>
+                <div class="file-input-wrapper">
+                    <input type="file" id="audio_file" name="audio_file" accept=".wav" required>
+                    <label for="audio_file" class="file-input-label" id="audioLabel">
+                        <span>📁 Choose WAV file</span>
+                        <div class="file-name" id="audioFileName"></div>
+                    </label>
+                </div>
+            </div>
+
+            <div class="upload-section">
+                <label for="json_file">Diarization Data (JSON format)</label>
+                <div class="file-input-wrapper">
+                    <input type="file" id="json_file" name="json_file" accept=".json" required>
+                    <label for="json_file" class="file-input-label" id="jsonLabel">
+                        <span>📄 Choose JSON file</span>
+                        <div class="file-name" id="jsonFileName"></div>
+                    </label>
+                </div>
+            </div>
+
+            <button type="submit" class="btn" id="submitBtn">
+                Process Audio
+            </button>
+        </form>
+
+        <div class="spinner" id="spinner"></div>
+
+        <div class="status" id="status"></div>
+
+        <div class="results" id="results">
+            <h3 style="margin-bottom: 15px; color: #333;">Download Results</h3>
+            <div id="speakerList"></div>
+            <button class="btn download-all" id="downloadAllBtn">
+                📦 Download All (ZIP)
+            </button>
+        </div>
+    </div>
+
+    <script>
+        const audioInput = document.getElementById('audio_file');
+        const jsonInput = document.getElementById('json_file');
+        const audioLabel = document.getElementById('audioLabel');
+        const jsonLabel = document.getElementById('jsonLabel');
+        const audioFileName = document.getElementById('audioFileName');
+        const jsonFileName = document.getElementById('jsonFileName');
+        const uploadForm = document.getElementById('uploadForm');
+        const statusDiv = document.getElementById('status');
+        const resultsDiv = document.getElementById('results');
+        const speakerList = document.getElementById('speakerList');
+        const submitBtn = document.getElementById('submitBtn');
+        const spinner = document.getElementById('spinner');
+        const downloadAllBtn = document.getElementById('downloadAllBtn');
+
+        let currentSessionId = null;
+
+        // Handle file selection display
+        audioInput.addEventListener('change', function(e) {
+            if (this.files && this.files[0]) {
+                audioFileName.textContent = this.files[0].name;
+                audioLabel.classList.add('has-file');
+            }
+        });
+
+        jsonInput.addEventListener('change', function(e) {
+            if (this.files && this.files[0]) {
+                jsonFileName.textContent = this.files[0].name;
+                jsonLabel.classList.add('has-file');
+            }
+        });
+
+        // Handle form submission
+        uploadForm.addEventListener('submit', async function(e) {
+            e.preventDefault();
+
+            const formData = new FormData(this);
+
+            // Reset UI
+            statusDiv.className = 'status';
+            statusDiv.style.display = 'none';
+            resultsDiv.classList.remove('show');
+            submitBtn.disabled = true;
+            spinner.classList.add('show');
+
+            // Show processing status
+            statusDiv.className = 'status processing';
+            statusDiv.textContent = 'Processing your audio files... This may take a few minutes.';
+
+            try {
+                const response = await fetch('/upload', {
+                    method: 'POST',
+                    body: formData
+                });
+
+                const data = await response.json();
+
+                if (response.ok && data.success) {
+                    // Success
+                    currentSessionId = data.session_id;
+                    statusDiv.className = 'status success';
+                    statusDiv.textContent = data.message;
+
+                    // Display speaker results
+                    speakerList.innerHTML = '';
+                    data.speakers.forEach(speaker => {
+                        const item = document.createElement('div');
+                        item.className = 'speaker-item';
+                        item.innerHTML = `
+                            <span><strong>${speaker}</strong></span>
+                            <a href="/download/${currentSessionId}/${speaker}" class="download-link" download>
+                                ⬇️ Download
+                            </a>
+                        `;
+                        speakerList.appendChild(item);
+                    });
+
+                    resultsDiv.classList.add('show');
+                } else {
+                    // Error
+                    statusDiv.className = 'status error';
+                    statusDiv.textContent = data.error || 'An error occurred during processing.';
+                }
+            } catch (error) {
+                statusDiv.className = 'status error';
+                statusDiv.textContent = 'Network error: ' + error.message;
+            } finally {
+                submitBtn.disabled = false;
+                spinner.classList.remove('show');
+            }
+        });
+
+        // Download all button
+        downloadAllBtn.addEventListener('click', function() {
+            if (currentSessionId) {
+                window.location.href = `/download/${currentSessionId}`;
+            }
+        });
+    </script>
+</body>
+</html>
