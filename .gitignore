@@ -1,12 +1,8 @@
-# Byte-compiled / optimized / DLL files
+# Python
 __pycache__/
 *.py[cod]
 *$py.class
-
-# C extensions
 *.so
-
-# Distribution / packaging
 .Python
 build/
 develop-eggs/
@@ -20,29 +16,9 @@ parts/
 sdist/
 var/
 wheels/
-pip-wheel-metadata/
-share/python-wheels/
 *.egg-info/
 .installed.cfg
 *.egg
-
-# PyInstaller
-*.manifest
-*.spec
-
-# Unit test / coverage reports
-htmlcov/
-.tox/
-.nox/
-.coverage
-.coverage.*
-.cache
-nosetests.xml
-coverage.xml
-*.cover
-*.py,cover
-.hypothesis/
-.pytest_cache/
 
 # Virtual environments
 venv/
@@ -57,11 +33,14 @@ env/
 *.swo
 *~
 
-# macOS
+# OS
 .DS_Store
+Thumbs.db
 
-# Audio output files
+# Output files
 output-audio-*.wav
 
-# Temporary diarization files
-*.json.tmp
+# Temporary files
+*.tmp
+temp/
+tmp/

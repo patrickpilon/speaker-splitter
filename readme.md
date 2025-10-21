@@ -43,11 +43,12 @@ conda activate audio-splitter
 
 3. Install required Python packages:
 ```bash
-# Install basic requirements
 pip install -r requirements.txt
+```
 
-# OR install manually:
-pip install pydub whisperx torch torchaudio
+Or manually install:
+```bash
+pip install pydub gradio
 ```
 
 4. Install FFmpeg:
@@ -67,38 +68,25 @@ pip install pydub whisperx torch torchaudio
 
 ## Usage
 
-Speaker Splitter supports two modes of operation:
+### Option 1: Web UI (Recommended for Easy Use)
 
-### Mode 1: Automatic Diarization with WhisperX (Recommended)
-
-This mode automatically transcribes and diarizes your audio file using WhisperX:
+Launch the Gradio web interface for a user-friendly experience:
 
 ```bash
-# Basic usage with WhisperX
-python speaker_splitter.py input.wav --use-whisperx --hf-token YOUR_HF_TOKEN
-
-# Using a larger model for better accuracy
-python speaker_splitter.py input.wav --use-whisperx --model large-v3 --hf-token YOUR_HF_TOKEN
-
-# Using GPU acceleration (if available)
-python speaker_splitter.py input.wav --use-whisperx --device cuda --compute-type float16 --hf-token YOUR_HF_TOKEN
-
-# Save the diarization results to a JSON file for later use
-python speaker_splitter.py input.wav --use-whisperx --hf-token YOUR_HF_TOKEN --save-json diarization.json
+python app.py
 ```
 
-**WhisperX Options:**
-- `--use-whisperx`: Enable WhisperX mode
-- `--model`: Whisper model size (tiny, base, small, medium, large-v2, large-v3). Default: base
-- `--device`: Computation device (cpu, cuda). Default: cpu
-- `--compute-type`: Precision type (float32, float16, int8). Default: float32
-- `--hf-token`: Your HuggingFace token (required for speaker diarization)
-- `--save-json`: Save diarization results to a JSON file
+This will start a web server and open a browser window where you can:
+1. Upload your WAV audio file
+2. Upload your JSON diarization file
+3. Click "Split Speakers"
+4. Download the individual speaker files
 
-### Mode 2: Using Pre-existing JSON Diarization File
+The web UI provides real-time status updates and easy file management.
 
-If you already have a diarization JSON file from WhisperX, LinTO, or another tool:
+### Option 2: Command Line Interface
 
+The basic command format is:
 ```bash
 python speaker_splitter.py input.wav diarization.json
 ```
@@ -186,7 +174,7 @@ The script includes error handling for common issues:
 
 ## Future Developments (not planned yet)
 - Cross-fade between segments to reduce abrupt transitions
-- Simple web interface for file upload and processing and real-time processing status
+- ✅ ~~Simple web interface for file upload and processing and real-time processing status~~ **DONE - Gradio UI available!**
 - Speech overlap detection and handling
 - Process multiple files in batch
 - Docker container for easy deployment
