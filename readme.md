@@ -12,6 +12,7 @@ A Python tool to separate audio files by speaker using diarization data. This to
 - Creates silence during non-speaking segments
 - Supports multiple speakers
 - Simple command-line interface
+- Web-based JSON diarization editor for manual creation and editing
 
 ## Prerequisites
 
@@ -105,6 +106,56 @@ whisperx audio.wav --diarize
 
 Both tools provide accurate speaker diarization and transcription, with the JSON output being compatible with this tool.
 
+### Creating JSON Files Manually
+
+For manual creation or editing of diarization JSON files, use the included **JSON Diarization Editor** - a web-based tool with a user-friendly interface.
+
+#### Starting the Editor
+
+Run the editor with:
+```bash
+python run_editor.py
+```
+
+Or specify a custom port:
+```bash
+python run_editor.py 8080
+```
+
+The editor will automatically open in your default browser at `http://localhost:8000/diarization_editor.html`
+
+Alternatively, you can open `diarization_editor.html` directly in any web browser without running the server.
+
+#### Editor Features
+
+- **Add/Edit Segments**: Create speaker segments with start/end timestamps and optional text
+- **Validation**: Automatic validation of timestamp format (HH:MM:SS,MMM)
+- **Import/Export**: Load existing JSON files for editing or export your work
+- **Visual Preview**: See your segments listed in chronological order
+- **JSON Preview**: Real-time preview of the generated JSON structure
+- **Time Sorting**: Segments are automatically sorted by start time
+
+#### Using the Editor
+
+1. **Add a Segment**:
+   - Enter Speaker ID (e.g., SPEAKER_00, SPEAKER_01)
+   - Enter Start Time in HH:MM:SS,MMM format
+   - Enter End Time in HH:MM:SS,MMM format
+   - Optionally add the spoken text
+   - Click "Add Segment"
+
+2. **Edit/Delete Segments**:
+   - Click "Edit" on any segment to modify it
+   - Click "Delete" to remove a segment
+
+3. **Export**:
+   - Click "Export JSON" to download the diarization file
+   - Use this file with the speaker_splitter.py tool
+
+4. **Import**:
+   - Click "Import JSON" to load an existing diarization file
+   - Edit and re-export as needed
+
 ### Output
 
 The script generates separate WAV files for each speaker:
@@ -131,7 +182,7 @@ The script includes error handling for common issues:
 - WhisperX Integration: a major planned enhancement is the direct integration of WhisperX for a complete transcription and diarization workflow
 - Audio Format Support: add support for additional audio formats such as MP3, FLAC, etc.
 - Cross-fade between segments to reduce abrupt transitions
-- Simple web interface for file upload and processing and real-time processing status
+- Web interface for audio file upload and processing with real-time processing status
 - Speech overlap detection and handling
 - Process multiple files in batch
 - Docker container for easy deployment
