@@ -1,23 +1,31 @@
 # Speaker Splitter
 
-A Python tool to separate audio files by speaker using diarization data. This tool takes a WAV audio file and a JSON file containing speaker timestamps, and creates individual WAV files for each speaker, maintaining the original timing and replacing other speakers' segments with silence.
+A Python tool to separate audio files by speaker using diarization data or automatic diarization with WhisperX. This tool can either take a WAV audio file with a JSON file containing speaker timestamps, or automatically transcribe and diarize audio using WhisperX, then creates individual WAV files for each speaker, maintaining the original timing and replacing other speakers' segments with silence.
 
 ![Speaker Splitter](/assets/images/Speaker-Splitter-workflow.png)
 
 ## Features
 
+- **Integrated WhisperX support** for automatic transcription and speaker diarization
 - Separates multi-speaker audio into individual speaker files
+- Two modes of operation:
+  - Manual mode: Use pre-existing JSON diarization files
+  - Automatic mode: Use WhisperX for end-to-end processing
 - Preserves original timing and audio quality
 - Handles timestamps in HH:MM:SS,MMM format
 - Creates silence during non-speaking segments
 - Supports multiple speakers
 - Simple command-line interface
+- Web-based JSON diarization editor for manual creation and editing
 
 ## Prerequisites
 
 - Python 3.11 or higher
 - `pydub` library for audio processing
 - FFmpeg (required by pydub)
+- `whisperx` library for automatic diarization (optional, required for WhisperX mode)
+- PyTorch (required for WhisperX mode)
+- HuggingFace account and token (for WhisperX speaker diarization)
 
 ## Installation
 
@@ -35,7 +43,12 @@ conda activate audio-splitter
 
 3. Install required Python packages:
 ```bash
-pip install pydub
+pip install -r requirements.txt
+```
+
+Or manually install:
+```bash
+pip install pydub gradio
 ```
 
 4. Install FFmpeg:
@@ -47,6 +60,11 @@ pip install pydub
   ```bash
   brew install ffmpeg
   ```
+
+5. (For WhisperX mode) Get a HuggingFace token:
+- Create an account at [HuggingFace](https://huggingface.co)
+- Get your token at [HuggingFace Settings](https://huggingface.co/settings/tokens)
+- Accept the user agreement for speaker diarization at [pyannote/speaker-diarization-3.1](https://huggingface.co/pyannote/speaker-diarization-3.1)
 
 ## Usage
 
@@ -94,13 +112,14 @@ python speaker_splitter.py input.wav diarization.json
 ### Input Files
 
 1. Audio file (`input.wav`):
-   - Must be in WAV format
+   - Can be in WAV format or other formats supported by WhisperX (MP3, FLAC, etc.)
    - Contains the multi-speaker audio to be separated
 
-2. JSON file (`diarization.json`):
+2. JSON file (`diarization.json`) - Optional when using `--use-whisperx`:
    - Contains speaker segments with timestamps
    - Can be generated using various diarization tools such as:
-     - [WhisperX](https://github.com/m-bain/whisperX): an open-source tool that combines Whisper with speaker diarization
+     - This tool's WhisperX integration (with `--save-json`)
+     - [WhisperX](https://github.com/m-bain/whisperX) CLI
      - [LinTO](https://linto.app): an enterprise-grade conversational AI platform developed by [LINAGORA](https://www.linagora.com)
    - Format example:
 ```json
@@ -122,15 +141,15 @@ python speaker_splitter.py input.wav diarization.json
 }
 ```
 
-#### Generating the JSON File
+#### Generating the JSON File with External Tools
 
-1. Using WhisperX:
+1. Using WhisperX CLI directly:
 ```bash
 # Install WhisperX
 pip install whisperx
 
 # Run diarization
-whisperx audio.wav --diarize
+whisperx audio.wav --diarize --hf_token YOUR_HF_TOKEN
 ```
 
 2. Using LinTO:
@@ -140,6 +159,56 @@ whisperx audio.wav --diarize
    - Export the results in JSON format
 
 Both tools provide accurate speaker diarization and transcription, with the JSON output being compatible with this tool.
+
+### Creating JSON Files Manually
+
+For manual creation or editing of diarization JSON files, use the included **JSON Diarization Editor** - a web-based tool with a user-friendly interface.
+
+#### Starting the Editor
+
+Run the editor with:
+```bash
+python run_editor.py
+```
+
+Or specify a custom port:
+```bash
+python run_editor.py 8080
+```
+
+The editor will automatically open in your default browser at `http://localhost:8000/diarization_editor.html`
+
+Alternatively, you can open `diarization_editor.html` directly in any web browser without running the server.
+
+#### Editor Features
+
+- **Add/Edit Segments**: Create speaker segments with start/end timestamps and optional text
+- **Validation**: Automatic validation of timestamp format (HH:MM:SS,MMM)
+- **Import/Export**: Load existing JSON files for editing or export your work
+- **Visual Preview**: See your segments listed in chronological order
+- **JSON Preview**: Real-time preview of the generated JSON structure
+- **Time Sorting**: Segments are automatically sorted by start time
+
+#### Using the Editor
+
+1. **Add a Segment**:
+   - Enter Speaker ID (e.g., SPEAKER_00, SPEAKER_01)
+   - Enter Start Time in HH:MM:SS,MMM format
+   - Enter End Time in HH:MM:SS,MMM format
+   - Optionally add the spoken text
+   - Click "Add Segment"
+
+2. **Edit/Delete Segments**:
+   - Click "Edit" on any segment to modify it
+   - Click "Delete" to remove a segment
+
+3. **Export**:
+   - Click "Export JSON" to download the diarization file
+   - Use this file with the speaker_splitter.py tool
+
+4. **Import**:
+   - Click "Import JSON" to load an existing diarization file
+   - Edit and re-export as needed
 
 ### Output
 
